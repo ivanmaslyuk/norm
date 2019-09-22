@@ -5,7 +5,7 @@ module.exports = class BaseModel {
     constructor(values = {}) {
         this._values = {}
 
-        for (const field in this.fields) {
+        for (const field in this._meta.fields) {
             Object.defineProperty(this, field, {
                 get() {
                     // console.log('getting ' + field)
@@ -14,15 +14,15 @@ module.exports = class BaseModel {
                 set(val) {
                     // console.log('setting ' + field)
                     // TODO: check for reserved keywords such as save, _meta, ...
-                    this.fields[field].validate(val)
+                    this._meta.fields[field].validate(val)
                     this._values[field] = val
                 }
             })
         }
 
         // Add defaults to values
-        for (const fieldName in this.fields) {
-            const field = this.fields[fieldName]
+        for (const fieldName in this._meta.fields) {
+            const field = this._meta.fields[fieldName]
             if (values[fieldName] === undefined && field.def !== undefined) {
                 values[fieldName] = field.def
             }
@@ -30,14 +30,14 @@ module.exports = class BaseModel {
 
         // Set values
         for (const field in values) {
-            if (Object.getOwnPropertyNames(this.fields).includes(field)) {
+            if (Object.getOwnPropertyNames(this._meta.fields).includes(field)) {
                 this[field] = values[field]
             }
         }
 
         // Validate all fields.
-        for (const fieldName in this.fields) {
-            this.fields[fieldName].validate(this._values[fieldName])
+        for (const fieldName in this._meta.fields) {
+            this._meta.fields[fieldName].validate(this._values[fieldName])
         }
 
     }
@@ -45,15 +45,15 @@ module.exports = class BaseModel {
     async save() {
         for (const fieldName in this._values) {
             const value = this._values[fieldName]
-            this.fields[fieldName].validateForSaving(value)
+            this._meta.fields[fieldName].validateForSaving(value)
         }
 
         const fields = []
         const values = []
-        for (const field in this.fields) {
+        for (const field in this._meta.fields) {
             if (field === 'id') { continue }
             fields.push(`"${field}"`)
-            values.push(this.fields[field].sql(this._values[field]))
+            values.push(this._meta.fields[field].sql(this._values[field]))
         }
 
         let sql = ''

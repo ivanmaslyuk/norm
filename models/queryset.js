@@ -26,7 +26,7 @@ class QuerySet {
             exclude: {},
             selectCount: false,
             selectOne: false,
-            fieldsToFetch: Object.getOwnPropertyNames(model.prototype.fields),
+            fieldsToFetch: Object.getOwnPropertyNames(model.prototype._meta.fields),
             action: 'SELECT',
             newValues: {}
         }
@@ -40,7 +40,7 @@ class QuerySet {
 
     assureFieldsExistCurrentModel(fields) {
         for (const fieldName of fields) {
-            if (!this.model.prototype.fields[fieldName]) {
+            if (!this.model.prototype._meta.fields[fieldName]) {
                 throw `${this.model.name} does not have a field named '${fieldName}'`
             }
         }
@@ -48,7 +48,7 @@ class QuerySet {
 
     assureFieldValuesAreValidForCurrentModel(values) {
         for (const fieldName in values) {
-            this.model.prototype.fields[fieldName].validate(values[fieldName])
+            this.model.prototype._meta.fields[fieldName].validate(values[fieldName])
         }
     }
 
@@ -213,7 +213,7 @@ class QuerySet {
         if (this.query.action === 'UPDATE') {
             const values = []
             for (const fieldName in this.query.newValues) {
-                const field = this.model.prototype.fields[fieldName]
+                const field = this.model.prototype._meta.fields[fieldName]
                 const value = field.sql(this.query.newValues[fieldName])
                 values.push(`${fieldName} = ${value}`)
             }
@@ -229,11 +229,11 @@ class QuerySet {
         const operatorValues = this.query.filter
         for (const operator in operatorValues) {
             for (const key in operatorValues[operator]) {
-                if (!(key in this.model.prototype.fields)) {
+                if (!(key in this.model.prototype._meta.fields)) {
                     throw new FieldError(`No such field: ${key}`)
                 }
 
-                const field = this.model.prototype.fields[key]
+                const field = this.model.prototype._meta.fields[key]
                 let value = operatorValues[operator][key]
 
                 if (value instanceof Array) {
@@ -259,11 +259,11 @@ class QuerySet {
         const excludeValues = this.query.exclude
         for (const operator in excludeValues) {
             for (const key in excludeValues[operator]) {
-                if (!(key in this.model.prototype.fields)) {
+                if (!(key in this.model.prototype._meta.fields)) {
                     throw new FieldError(`No such field: ${key}`)
                 }
 
-                const field = this.model.prototype.fields[key]
+                const field = this.model.prototype._meta.fields[key]
                 let value = excludeValues[operator][key]
 
                 if (value instanceof Array) {

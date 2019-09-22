@@ -33,14 +33,14 @@ exports.makeModel = function (name, fields) {
         }
     }
 
-    Model.prototype.fields = {}
+    Model.prototype._meta.fields = {}
     for (const key in fields) {
         if (fields[key] instanceof Field) {
             fields[key].name = key
-            Model.prototype.fields[key] = fields[key]
+            Model.prototype._meta.fields[key] = fields[key]
         }
     }
-    Model.prototype.fields.id = new AutoField()
+    Model.prototype._meta.fields.id = new AutoField()
 
     Object.defineProperty(Model, 'name', { value: name })
 
