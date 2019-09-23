@@ -112,7 +112,7 @@ module.exports = class BaseModel {
             let valueDescription = ''
             switch (typeof value) {
                 case 'string':
-                    valueDescription = `\x1b[31m${util.inspect(value)}\x1b[0m`
+                    valueDescription = `\x1b[32m${util.inspect(value)}\x1b[0m`
                     break
                 case 'number':
                     valueDescription = `\x1b[33m${util.inspect(value)}\x1b[0m`
