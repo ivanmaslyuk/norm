@@ -1,3 +1,6 @@
+const inspect = Symbol.for('nodejs.util.inspect.custom')
+const util = require('util')
+
 const { QuerySet } = require('./queryset')
 const { query } = require('../db/query')
 
@@ -99,5 +102,32 @@ module.exports = class BaseModel {
 
     get isInstance() {
         return this.id !== null && this.id !== undefined
+    }
+
+    [inspect]() {
+        let output = `\x1b[36m${this.constructor.name}\x1b[0m {\n`
+        const fieldDescriptions = []
+        for (const fieldName in this._meta.fields) {
+            const value = this[fieldName]
+            let valueDescription = ''
+            switch (typeof value) {
+                case 'string':
+                    valueDescription = `\x1b[31m${util.inspect(value)}\x1b[0m`
+                    break
+                case 'number':
+                    valueDescription = `\x1b[33m${util.inspect(value)}\x1b[0m`
+                    break
+                case 'object':
+                    valueDescription = `\x1b[34m${util.inspect(value)}\x1b[0m`
+                    break
+                default:
+                    valueDescription = util.inspect(value)
+                    break
+            }
+
+            fieldDescriptions.push(`  ${fieldName}: ${valueDescription}`)
+        }
+        output += fieldDescriptions.join(',\n') + '\n}'
+        return output
     }
 }

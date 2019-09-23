@@ -10,6 +10,10 @@ var User = {
 
     fullName() {
         return [this.firstName, this.lastName].join(' ')
+    },
+
+    Meta: {
+        defaultIdFieldEnabled: false
     }
 }
 
@@ -18,6 +22,5 @@ var { User } = makeModels({ User })
 async function test() {
     const user = await User.objects.exclude({ firstName: '', lastName: '' }).orderBy('id').first()
     console.log(user)
-    console.log(user.fullName())
 }
 test()
