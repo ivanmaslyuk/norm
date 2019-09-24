@@ -37,13 +37,14 @@ class Field {
         if (this.blank === false && !hasValue(value)) {
             throw new FieldError(`'${this.name}' cannot be blank.`)
         }
+        return value
     }
 
     validateForSaving(value) {
         if (this.null === false && !hasValue(value)) {
             throw new FieldError(`'${this.name}' cannot be NULL.`)
         }
-        this.validate(value)
+        return this.validate(value)
     }
 
     sql(value) {
@@ -68,6 +69,7 @@ class CharField extends Field {
         if (hasValue(value) && value.length > this.maxLength) {
             throw new FieldError(`'${this.name}' cannot store strings longer than ${this.maxLength} characters.`)
         }
+        return value
     }
 
     sql(value) {
@@ -84,6 +86,7 @@ class BooleanField extends Field {
         if (hasValue(value) && typeof value != 'boolean') {
             throw new FieldError(`Invalid value type for field '${this.name}'. Boolean expected.`)
         }
+        return value
     }
     sql(value) {
         return value == true ? 'TRUE' : "FALSE"
@@ -100,6 +103,7 @@ class IntegerField extends Field {
         if (hasValue(value) && typeof value !== 'number' && !isInt(value)) {
             throw new FieldError(`Invalid value type for field '${this.name}'. Integer expected.`)
         }
+        return value
     }
 
     sql(value) {
@@ -113,6 +117,7 @@ class AutoField extends Field {
         if (hasValue(value) && !isInt(value)) {
             throw new FieldError('AutoField only takes integer values.')
         }
+        return value
     }
 }
 
@@ -124,7 +129,10 @@ class DateTimeField extends Field {
     }
 
     validate(value) {
-        super.validate(value)
+        if (['number', 'string'].includes(typeof value)) {
+            return new Date(value)
+        }
+        return super.validate(value)
     }
 
     sql(value) {

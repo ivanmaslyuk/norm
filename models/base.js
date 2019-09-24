@@ -17,7 +17,7 @@ module.exports = class BaseModel {
                 set(val) {
                     // console.log('setting ' + field)
                     // TODO: check for reserved keywords such as save, _meta, ...
-                    this._meta.fields[field].validate(val)
+                    val = this._meta.fields[field].validate(val)
                     this._values[field] = val
                 }
             })
@@ -40,7 +40,7 @@ module.exports = class BaseModel {
 
         // Validate all fields.
         for (const fieldName in this._meta.fields) {
-            this._meta.fields[fieldName].validate(this._values[fieldName])
+            this._values[fieldName] = this._meta.fields[fieldName].validate(this._values[fieldName])
         }
 
     }
