@@ -13,7 +13,9 @@ exports.query = async function (qs) {
     const client = new Client(settings)
     await client.connect()
     try {
-        return await client.query(queryString)
+        const result = await client.query(queryString)
+        // console.log(result)
+        return result
     } finally {
         await client.end()
     }

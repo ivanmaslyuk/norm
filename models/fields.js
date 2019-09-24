@@ -116,9 +116,42 @@ class AutoField extends Field {
     }
 }
 
+class DateTimeField extends Field {
+    constructor(options) {
+        super(options)
+        this.setOnCreate = options.setOnCreate || false
+        this.setOnUpdate = options.setOnUpdate || false
+    }
+
+    validate(value) {
+        super.validate(value)
+    }
+
+    sql(value) {
+        function add0(val) {
+            return val.toString().length > 1 ? val : '0' + val
+        }
+        if (['number', 'string'].includes(typeof value)) {
+            value = new Date(value)
+        }
+        if (value instanceof Date) {
+            value = `${value.getFullYear()}-${add0(value.getMonth())}-${add0(value.getDate())} ${add0(value.getHours())}:${add0(value.getMinutes())}:${add0(value.getSeconds())}`
+            return `to_timestamp('${value}', 'YYYY-MM-DD HH24:MI:SS')`
+        }
+    }
+}
+
+class DateField extends Field { }
+class TimeField extends Field { }
+class TextField extends Field { }
+class BigIntegerField extends Field { }
+class SmallIntegerField extends Field { }
+class DecimalField extends Field { }
+class FloatField extends Field { }
 
 
-module.exports = { CharField, BooleanField, IntegerField, Field, AutoField }
+
+module.exports = { CharField, BooleanField, IntegerField, Field, AutoField, DateTimeField }
 
 module.exports.PROTECT = 'PROTECT'
 module.exports.CASCADE = 'CASCADE'

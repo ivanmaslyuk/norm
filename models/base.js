@@ -120,6 +120,9 @@ module.exports = class BaseModel {
                 case 'object':
                     valueDescription = `\x1b[34m${util.inspect(value)}\x1b[0m`
                     break
+                case 'boolean':
+                    valueDescription = `\x1b[34m${util.inspect(value)}\x1b[0m`
+                    break
                 default:
                     valueDescription = util.inspect(value)
                     break
