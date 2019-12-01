@@ -18,7 +18,7 @@ function formatOperator(operator, leftOperand, rightOperand) {
     return OPERATORS[operator].replace('%l', leftOperand).replace('%r', rightOperand)
 }
 
-class QuerySet {
+class Query {
     constructor(model) {
         this.model = model
         this.query = {
@@ -33,12 +33,12 @@ class QuerySet {
     }
 
     copy() {
-        const qs = new QuerySet(this.model)
+        const qs = new Query(this.model)
         qs.query = JSON.parse(JSON.stringify(this.query))
         return qs
     }
 
-    assureFieldsExistCurrentModel(fields) {
+    assureFieldsExistForCurrentModel(fields) {
         for (const fieldName of fields) {
             if (!this.model.prototype._meta.fields[fieldName]) {
                 throw `${this.model.name} does not have a field named '${fieldName}'`
@@ -173,10 +173,10 @@ class QuerySet {
 
     async update(newValues) {
         const fields = Object.getOwnPropertyNames(newValues)
-        this.assureFieldsExistCurrentModel(fields)
+        this.assureFieldsExistForCurrentModel(fields)
         this.assureFieldValuesAreValidForCurrentModel(newValues)
         if (fields.length === 0) {
-            throw 'No values passed to QuerySet.update()'
+            throw 'No values passed to Query.update()'
         }
 
         const qs = this.copy()
@@ -190,7 +190,7 @@ class QuerySet {
         if (fields.length > 0) {
             qs.query.fieldsToFetch = fields
         }
-        this.assureFieldsExistCurrentModel(fields)
+        this.assureFieldsExistForCurrentModel(fields)
         const dbResponse = await query(qs)
         return dbResponse.rows;
     }
@@ -318,4 +318,4 @@ class QuerySet {
     }
 }
 
-module.exports = { QuerySet }
+module.exports = { Query }

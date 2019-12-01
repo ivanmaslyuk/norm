@@ -1,7 +1,7 @@
 const inspect = Symbol.for('nodejs.util.inspect.custom')
 const util = require('util')
 
-const { QuerySet } = require('./queryset')
+const { Query } = require('./query')
 const { query } = require('../db/query')
 
 module.exports = class BaseModel {
@@ -77,7 +77,7 @@ module.exports = class BaseModel {
     }
 
     static get objects() {
-        return new QuerySet(this)
+        return new Query(this)
     }
 
     async refreshFromDb() {
@@ -85,7 +85,7 @@ module.exports = class BaseModel {
             throw 'Cannot refresh a model from the database if it is not saved.'
         }
 
-        const qs = new QuerySet(this.constructor)
+        const qs = new Query(this.constructor)
         const response = await qs.filter({ id: this.id }).values()
         this._values = response[0]
     }
