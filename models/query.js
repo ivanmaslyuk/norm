@@ -168,7 +168,8 @@ class Query {
     async delete() {
         const qs = this.copy()
         qs.query.action = 'DELETE'
-        await query(qs)
+        const result = await query(qs)
+        return result.rowCount
     }
 
     async update(newValues) {
@@ -182,7 +183,8 @@ class Query {
         const qs = this.copy()
         qs.query.action = 'UPDATE'
         qs.query.newValues = newValues
-        await query(qs)
+        const result = await query(qs)
+        return result.rowCount
     }
 
     async values(...fields) {
