@@ -11,10 +11,6 @@ var User = {
 
     fullName() {
         return [this.firstName, this.lastName].join(' ')
-    },
-
-    Meta: {
-        defaultIdFieldEnabled: false
     }
 }
 
