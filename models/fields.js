@@ -1,4 +1,4 @@
-
+const { FieldError } = require('./exceptions')
 
 function hasValue(variable) {
     return variable !== NaN && variable !== null && variable !== undefined
@@ -6,22 +6,6 @@ function hasValue(variable) {
 
 function isInt(n) {
     return n % 1 === 0
-}
-
-const commonOptions = function (options) {
-    if (!options) options = {}
-    return {
-        null: options.null != undefined ? options.null : false,
-        value: options.def || null
-    }
-}
-
-class FieldError extends Error {
-    constructor(message) {
-        super()
-        this.name = "FieldError"
-        this.message = message
-    }
 }
 
 class Field {
@@ -158,22 +142,3 @@ module.exports = { CharField, BooleanField, IntegerField, Field, AutoField, Date
 module.exports.PROTECT = 'PROTECT'
 module.exports.CASCADE = 'CASCADE'
 module.exports.FieldError = FieldError
-
-
-
-
-
-
-
-
-
-// module.exports.DateTimeField = function (options) {
-//     return {
-//         ...commonOptions(options),
-//         type: 'TIMESTAMP',
-
-//         get sql() {
-//             return this.value.toString()
-//         }
-//     }
-// }

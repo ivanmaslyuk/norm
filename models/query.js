@@ -1,4 +1,4 @@
-const { FieldError } = require('./fields')
+const { FieldError } = require('./exceptions')
 const { query } = require('../db/query')
 
 const OPERATORS = {
