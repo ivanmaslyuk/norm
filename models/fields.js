@@ -89,7 +89,8 @@ class BooleanField extends Field {
         return value
     }
     sql(value) {
-        return value == true ? 'TRUE' : "FALSE"
+        if (value === null) { return 'NULL' }
+        return value === true ? 'TRUE' : "FALSE"
     }
 }
 

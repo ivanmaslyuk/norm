@@ -26,8 +26,8 @@ module.exports = class BaseModel {
         // Add defaults to values
         for (const fieldName in this._meta.fields) {
             const field = this._meta.fields[fieldName]
-            if (values[fieldName] === undefined && field.def !== undefined) {
-                values[fieldName] = field.def
+            if (values[fieldName] === undefined) {
+                values[fieldName] = field.def === undefined ? null : field.def
             }
         }
 
