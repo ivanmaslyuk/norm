@@ -27,17 +27,13 @@ class FieldError extends Error {
 class Field {
     constructor(options = {}) {
         this.null = hasValue(options.null) ? options.null : false
-        this.blank = hasValue(options.blank) ? options.blank : false
         if (options.def !== undefined) {
             this.def = options.def
         }
     }
 
     validate(value) {
-        if (this.blank === false && !hasValue(value)) {
-            throw new FieldError(`'${this.name}' cannot be blank.`)
-        }
-        return value
+        throw 'validate() is not implemented'
     }
 
     validateForSaving(value) {
@@ -62,7 +58,6 @@ class CharField extends Field {
     }
 
     validate(value) {
-        super.validate(value)
         if (typeof value !== "string" && hasValue(value)) {
             throw new FieldError(`Invalid value type for field '${this.name}'. String expected.`)
         }
@@ -82,7 +77,6 @@ class BooleanField extends Field {
         super(options)
     }
     validate(value) {
-        super.validate(value)
         if (hasValue(value) && typeof value != 'boolean') {
             throw new FieldError(`Invalid value type for field '${this.name}'. Boolean expected.`)
         }
@@ -100,7 +94,6 @@ class IntegerField extends Field {
     }
 
     validate(value) {
-        super.validate(value)
         if (hasValue(value) && typeof value !== 'number' && !isInt(value)) {
             throw new FieldError(`Invalid value type for field '${this.name}'. Integer expected.`)
         }
@@ -133,7 +126,7 @@ class DateTimeField extends Field {
         if (['number', 'string'].includes(typeof value)) {
             return new Date(value)
         }
-        return super.validate(value)
+        return value
     }
 
     sql(value) {
