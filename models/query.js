@@ -215,7 +215,7 @@ class Query {
             for (const fieldName in this.query.newValues) {
                 const field = this.model.prototype._meta.fields[fieldName]
                 const value = field.sql(this.query.newValues[fieldName])
-                values.push(`${fieldName} = ${value}`)
+                values.push(`"${fieldName}" = ${value}`)
             }
 
             sql += ` "${this.model.prototype._meta.table}" SET ${values.join(', ')}`

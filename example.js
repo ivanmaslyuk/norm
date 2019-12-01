@@ -17,7 +17,9 @@ var User = {
 var { User } = makeModels({ User })
 
 async function test() {
-    let user = await User.objects.create({ createdAt: Date.now() })
+    const query = User.objects.filter({ id_gte: 140 })
+    let user = await query.update({ firstName: 'FOURTY' })
     console.log(user)
+    console.log(await query.fetch())
 }
 test()
