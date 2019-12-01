@@ -25,9 +25,10 @@ class Query {
             filter: {},
             exclude: {},
             selectCount: false,
-            selectOne: false,
             fieldsToFetch: Object.getOwnPropertyNames(model.prototype._meta.fields),
             action: 'SELECT',
+            offset: null,
+            limit: null,
             newValues: {}
         }
     }
@@ -103,6 +104,18 @@ class Query {
         return qs
     }
 
+    offset(value) {
+        const q = this.copy()
+        q.query.offset = value
+        return q
+    }
+
+    limit(value) {
+        const q = this.copy()
+        q.query.limit = value
+        return q
+    }
+
     async count() {
         const qs = this.copy()
         qs.query.selectCount = true
@@ -145,8 +158,7 @@ class Query {
     }
 
     async first() {
-        const qs = this.copy()
-        qs.query.selectOne = true
+        const qs = this.limit(1)
 
         const result = await query(qs)
         if (result.rows.length > 0) {
@@ -312,8 +324,12 @@ class Query {
             sql += orderFields.join(',')
         }
 
-        if (this.query.selectOne) {
-            sql += ' LIMIT 1'
+        if (this.query.limit !== null) {
+            sql += ` LIMIT ${this.query.limit}`
+        }
+
+        if (this.query.offset != null) {
+            sql += ` OFFSET ${this.query.offset}`
         }
 
         return sql + ';'
