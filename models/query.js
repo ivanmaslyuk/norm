@@ -18,9 +18,20 @@ function formatOperator(operator, leftOperand, rightOperand) {
     return OPERATORS[operator].replace('%l', leftOperand).replace('%r', rightOperand)
 }
 
+function mapColumnValuesToFieldNames(columns, fields) {
+    const result = {}
+    for (const fieldName in fields) {
+        field = fields[fieldName]
+        const columnName = field.column || fieldName
+        result[fieldName] = columns[columnName]
+    }
+    return result
+}
+
 class Query {
     constructor(model) {
         this.model = model
+        this.fields = model.prototype._meta.fields
         this.query = {
             filter: {},
             exclude: {},
@@ -127,7 +138,8 @@ class Query {
         const result = await query(this)
         const results = [];
         for (const row of result.rows) {
-            results.push(new this.model(row, true))
+            const values = mapColumnValuesToFieldNames(row, this.fields)
+            results.push(new this.model(values, true))
         }
         return results
     }
@@ -162,7 +174,7 @@ class Query {
 
         const result = await query(qs)
         if (result.rows.length > 0) {
-            return new this.model(result.rows[0])
+            return new this.model(mapColumnValuesToFieldNames(result.rows[0], this.fields))
         }
         return null;
     }
@@ -206,7 +218,11 @@ class Query {
         }
         this.assureFieldsExistForCurrentModel(fields)
         const dbResponse = await query(qs)
-        return dbResponse.rows;
+        const result = []
+        for (const row of dbResponse.rows) {
+            result.push(mapColumnValuesToFieldNames(row, this.fields))
+        }
+        return result;
     }
 
     toString() {
@@ -217,8 +233,9 @@ class Query {
                 sql += ' COUNT(*)'
             } else {
                 const fields = [];
-                for (const field of this.query.fieldsToFetch) {
-                    fields.push(`"${field}"`)
+                for (const fieldName of this.query.fieldsToFetch) {
+                    const field = this.model.prototype._meta.fields[fieldName]
+                    fields.push(`"${field.column || fieldName}"`)
                 }
                 sql += ' ' + fields.join(', ')
             }
@@ -229,7 +246,7 @@ class Query {
             for (const fieldName in this.query.newValues) {
                 const field = this.model.prototype._meta.fields[fieldName]
                 const value = field.sql(this.query.newValues[fieldName])
-                values.push(`"${fieldName}" = ${value}`)
+                values.push(`"${field.column || fieldName}" = ${value}`)
             }
 
             sql += ` "${this.model.prototype._meta.table}" SET ${values.join(', ')}`

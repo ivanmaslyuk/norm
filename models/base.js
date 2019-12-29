@@ -53,10 +53,11 @@ module.exports = class BaseModel {
 
         const fields = []
         const values = []
-        for (const field in this._meta.fields) {
-            if (field === 'id') { continue }
-            fields.push(`"${field}"`)
-            values.push(this._meta.fields[field].sql(this._values[field]))
+        for (const fieldName in this._meta.fields) {
+            if (fieldName === 'id') { continue }
+            const field = this._meta.fields[fieldName]
+            fields.push(`"${field.column || fieldName}"`)
+            values.push(field.sql(this._values[fieldName]))
         }
 
         let sql = ''
@@ -65,7 +66,7 @@ module.exports = class BaseModel {
             for (let i = 0; i < fields.length; i++) {
                 setList.push(`${fields[i]} = ${values[i]}`)
             }
-            sql = `UPDATE "${this._meta.table}" SET ${setList.join(", ")} WHERE id = ${this.id};`
+            sql = `UPDATE "${this._meta.table}" SET ${setList.join(", ")} WHERE "id" = ${this.id};`
         } else {
             sql = `INSERT INTO "${this._meta.table}" (${fields.join(", ")}) VALUES (${values.join(", ")}) RETURNING "id";`
         }

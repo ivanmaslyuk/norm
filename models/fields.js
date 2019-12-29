@@ -11,6 +11,7 @@ function isInt(n) {
 class Field {
     constructor(options = {}) {
         this.null = hasValue(options.null) ? options.null : false
+        this.column = options.column
         if (options.def !== undefined) {
             this.def = options.def
         }
@@ -124,6 +125,7 @@ class DateTimeField extends Field {
             value = `${value.getFullYear()}-${add0(value.getMonth())}-${add0(value.getDate())} ${add0(value.getHours())}:${add0(value.getMinutes())}:${add0(value.getSeconds())}`
             return `to_timestamp('${value}', 'YYYY-MM-DD HH24:MI:SS')`
         }
+        return 'NULL';
     }
 }
 

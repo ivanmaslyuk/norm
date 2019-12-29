@@ -1,7 +1,7 @@
 const { makeModels, fields } = require('./main')
 
 var User = {
-    username: fields.CharField({ maxLength: 100, def: 'default' }),
+    username: fields.CharField({ maxLength: 100, def: 'default', column: 'login' }),
     password: fields.CharField({ maxLength: 100, def: 'passpass' }),
     firstName: fields.CharField({ maxLength: 100, null: true }),
     lastName: fields.CharField({ maxLength: 100, null: true }),
@@ -17,7 +17,9 @@ var User = {
 var { User } = makeModels({ User })
 
 async function test() {
-    const query = User.objects.orderBy('-id')
-    console.log(await query.limit(2).fetch())
+    user = await User.objects.filter({ id_gte: 98 }).first()
+    user.username = 'new9343'
+    await user.save()
+    console.log(user)
 }
 test()
