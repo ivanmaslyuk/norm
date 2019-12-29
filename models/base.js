@@ -46,6 +46,10 @@ module.exports = class BaseModel {
     }
 
     async save() {
+        await this._save()
+    }
+
+    async _save() {
         for (const fieldName in this._values) {
             const value = this._values[fieldName]
             this._meta.fields[fieldName].validateForSaving(value)
