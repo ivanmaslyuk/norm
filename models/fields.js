@@ -58,9 +58,6 @@ class CharField extends Field {
 }
 
 class BooleanField extends Field {
-    constructor(options) {
-        super(options)
-    }
     validate(value) {
         if (hasValue(value) && typeof value != 'boolean') {
             throw new FieldError(`Invalid value type for field '${this.name}'. Boolean expected.`)
@@ -74,10 +71,6 @@ class BooleanField extends Field {
 }
 
 class IntegerField extends Field {
-    constructor(options) {
-        super(options)
-    }
-
     validate(value) {
         if (hasValue(value) && typeof value !== 'number' && !isInt(value)) {
             throw new FieldError(`Invalid value type for field '${this.name}'. Integer expected.`)
@@ -140,7 +133,4 @@ class FloatField extends Field { }
 
 
 module.exports = { CharField, BooleanField, IntegerField, Field, AutoField, DateTimeField }
-
-module.exports.PROTECT = 'PROTECT'
-module.exports.CASCADE = 'CASCADE'
 module.exports.FieldError = FieldError

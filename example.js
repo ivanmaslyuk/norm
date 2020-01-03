@@ -18,8 +18,6 @@ var { User } = makeModels({ User })
 
 async function test() {
     user = await User.objects.filter({ id_gte: 98 }).first()
-    user.username = 'new9343'
-    await user.save()
     console.log(user)
 }
 test()

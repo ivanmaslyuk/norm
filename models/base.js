@@ -5,29 +5,28 @@ const { Query } = require('./query')
 const { query } = require('../db/query')
 
 module.exports = class BaseModel {
-    constructor(values = {}) {
+    constructor(values = {}, autoCreated = false) {
         this._values = {}
 
         for (const field in this._meta.fields) {
             Object.defineProperty(this, field, {
                 get() {
-                    // console.log('getting ' + field)
                     return this._values[field] || null
                 },
                 set(val) {
-                    // console.log('setting ' + field)
-                    // TODO: check for reserved keywords such as save, _meta, ...
                     val = this._meta.fields[field].validate(val)
                     this._values[field] = val
                 }
             })
         }
 
-        // Add defaults to values
-        for (const fieldName in this._meta.fields) {
-            const field = this._meta.fields[fieldName]
-            if (values[fieldName] === undefined) {
-                values[fieldName] = field.def === undefined ? null : field.def
+        // Add defaults to values if the model was not initialized by Norm
+        if (!autoCreated) {
+            for (const fieldName in this._meta.fields) {
+                const field = this._meta.fields[fieldName]
+                if (values[fieldName] === undefined) {
+                    values[fieldName] = field.def === undefined ? null : field.def
+                }
             }
         }
 

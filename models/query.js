@@ -174,7 +174,7 @@ class Query {
 
         const result = await query(qs)
         if (result.rows.length > 0) {
-            return new this.model(mapColumnValuesToFieldNames(result.rows[0], this.fields))
+            return new this.model(mapColumnValuesToFieldNames(result.rows[0], this.fields), true)
         }
         return null;
     }
