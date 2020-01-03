@@ -43,10 +43,13 @@ class CharField extends Field {
     }
 
     validate(value) {
-        if (typeof value !== "string" && hasValue(value)) {
+        if (!hasValue(value)) {
+            return null
+        }
+        if (typeof value !== "string") {
             throw new FieldError(`Invalid value type for field '${this.name}'. String expected.`)
         }
-        if (hasValue(value) && value.length > this.maxLength) {
+        if (value.length > this.maxLength) {
             throw new FieldError(`'${this.name}' cannot store strings longer than ${this.maxLength} characters.`)
         }
         return value
@@ -59,7 +62,10 @@ class CharField extends Field {
 
 class BooleanField extends Field {
     validate(value) {
-        if (hasValue(value) && typeof value != 'boolean') {
+        if (!hasValue(value)) {
+            return null
+        }
+        if (typeof value != 'boolean') {
             throw new FieldError(`Invalid value type for field '${this.name}'. Boolean expected.`)
         }
         return value
@@ -72,7 +78,10 @@ class BooleanField extends Field {
 
 class IntegerField extends Field {
     validate(value) {
-        if (hasValue(value) && typeof value !== 'number' && !isInt(value)) {
+        if (!hasValue(value)) {
+            return null
+        }
+        if (typeof value !== 'number' && !isInt(value)) {
             throw new FieldError(`Invalid value type for field '${this.name}'. Integer expected.`)
         }
         return value
@@ -86,7 +95,10 @@ class IntegerField extends Field {
 class AutoField extends Field {
     validateForSaving() { }
     validate(value) {
-        if (hasValue(value) && !isInt(value)) {
+        if (!hasValue(value)) {
+            return null
+        }
+        if (!isInt(value)) {
             throw new FieldError('AutoField only takes integer values.')
         }
         return value
@@ -129,8 +141,6 @@ class BigIntegerField extends Field { }
 class SmallIntegerField extends Field { }
 class DecimalField extends Field { }
 class FloatField extends Field { }
-
-
 
 module.exports = { CharField, BooleanField, IntegerField, Field, AutoField, DateTimeField }
 module.exports.FieldError = FieldError
