@@ -17,7 +17,9 @@ var User = {
 var { User } = makeModels({ User })
 
 async function test() {
-    user = await User.objects.filter({ id_gte: 98 }).first()
+    await User.objects.filter({ id: 1514 }).update({ height: 186 })
+    user = await User.objects.orderBy('-id').limit(4).fetch()
+    // user = new User()
     console.log(user)
 }
 test()

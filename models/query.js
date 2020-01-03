@@ -1,22 +1,6 @@
-const { FieldError } = require('./exceptions')
-const { query } = require('../db/query')
+const { runQuery } = require('../db/backends/base')
 
-const OPERATORS = {
-    gte: '%l >= %r',
-    in: '%l IN %r',
-    gt: '%l > %r',
-    lt: '%l < %r',
-    lte: '%l <= %r',
-    contains: 'COALESCE(%l, \'\') LIKE CONCAT(\'%\', %r, \'%\')',
-    icontains: 'UPPER(COALESCE(%l, \'\')) LIKE UPPER(CONCAT(\'%\', %r, \'%\'))',
-    equals: '%l = %r',
-    startswith: '%l LIKE CONCAT(%r, \'%\')',
-    endswith: '%l LIKE CONCAT(\'%\', %r)'
-}
-
-function formatOperator(operator, leftOperand, rightOperand) {
-    return OPERATORS[operator].replace('%l', leftOperand).replace('%r', rightOperand)
-}
+OPERATORS = ['gte', 'in', 'gt', 'lt', 'lte', 'contains', 'icontains', 'equals', 'startswith', 'endswith']
 
 function mapColumnValuesToFieldNames(columns, fields) {
     const result = {}
@@ -42,6 +26,10 @@ class Query {
             limit: null,
             newValues: {}
         }
+    }
+
+    async runQuery() {
+        return await runQuery(this)
     }
 
     copy() {
@@ -72,7 +60,7 @@ class Query {
             const value = lookups[key]
             const lastPart = parts[parts.length - 1]
 
-            if (!(lastPart in OPERATORS)) {
+            if (!OPERATORS.includes(lastPart)) {
                 if (!qs.query.filter.equals) {
                     qs.query.filter.equals = {}
                 }
@@ -130,12 +118,12 @@ class Query {
     async count() {
         const qs = this.copy()
         qs.query.selectCount = true
-        const result = await query(qs)
+        const result = await qs.runQuery()
         return result.rows[0].count
     }
 
     async fetch() {
-        const result = await query(this)
+        const result = await this.runQuery()
         const results = [];
         for (const row of result.rows) {
             const values = mapColumnValuesToFieldNames(row, this.fields)
@@ -152,7 +140,7 @@ class Query {
             const value = lookups[key]
             const lastPart = parts[parts.length - 1]
 
-            if (!(lastPart in OPERATORS)) {
+            if (!OPERATORS.includes(lastPart)) {
                 if (!qs.query.exclude.equals) {
                     qs.query.exclude.equals = {}
                 }
@@ -172,7 +160,7 @@ class Query {
     async first() {
         const qs = this.limit(1)
 
-        const result = await query(qs)
+        const result = await qs.runQuery()
         if (result.rows.length > 0) {
             return new this.model(mapColumnValuesToFieldNames(result.rows[0], this.fields), true)
         }
@@ -192,7 +180,7 @@ class Query {
     async delete() {
         const qs = this.copy()
         qs.query.action = 'DELETE'
-        const result = await query(qs)
+        const result = await qs.runQuery()
         return result.rowCount
     }
 
@@ -207,7 +195,7 @@ class Query {
         const qs = this.copy()
         qs.query.action = 'UPDATE'
         qs.query.newValues = newValues
-        const result = await query(qs)
+        const result = await qs.runQuery()
         return result.rowCount
     }
 
@@ -217,139 +205,12 @@ class Query {
             qs.query.fieldsToFetch = fields
         }
         this.assureFieldsExistForCurrentModel(fields)
-        const dbResponse = await query(qs)
+        const dbResponse = await qs.runQuery()
         const result = []
         for (const row of dbResponse.rows) {
             result.push(mapColumnValuesToFieldNames(row, this.fields))
         }
         return result;
-    }
-
-    toString() {
-        let sql = this.query.action
-
-        if (this.query.action === 'SELECT') {
-            if (this.query.selectCount) {
-                sql += ' COUNT(*)'
-            } else {
-                const fields = [];
-                for (const fieldName of this.query.fieldsToFetch) {
-                    const field = this.model.prototype._meta.fields[fieldName]
-                    fields.push(`"${field.column || fieldName}"`)
-                }
-                sql += ' ' + fields.join(', ')
-            }
-        }
-
-        if (this.query.action === 'UPDATE') {
-            const values = []
-            for (const fieldName in this.query.newValues) {
-                const field = this.model.prototype._meta.fields[fieldName]
-                const value = field.sql(this.query.newValues[fieldName])
-                values.push(`"${field.column || fieldName}" = ${value}`)
-            }
-
-            sql += ` "${this.model.prototype._meta.table}" SET ${values.join(', ')}`
-        }
-
-        if (['SELECT', 'DELETE'].includes(this.query.action)) {
-            sql += ` FROM "${this.model.prototype._meta.table}"`
-        }
-
-        const where = []
-        const operatorValues = this.query.filter
-        for (const operator in operatorValues) {
-            for (const key in operatorValues[operator]) {
-                if (!(key in this.model.prototype._meta.fields)) {
-                    throw new FieldError(`No such field: ${key}`)
-                }
-
-                const field = this.model.prototype._meta.fields[key]
-                let value = operatorValues[operator][key]
-
-                if (value instanceof Array) {
-                    const _value = []
-                    for (const val of value) {
-                        field.validate(val)
-                        _value.push(field.sql(val))
-                    }
-                    value = `(${_value.join(', ')})`
-                } else {
-                    field.validate(value)
-                    value = field.sql(value)
-                }
-
-                if (operator === 'equals' && value === 'NULL') {
-                    where.push(`"${key}" IS NULL`)
-                } else {
-                    where.push(formatOperator(operator, `"${key}"`, value))
-                }
-            }
-        }
-
-        const excludeValues = this.query.exclude
-        for (const operator in excludeValues) {
-            for (const key in excludeValues[operator]) {
-                if (!(key in this.model.prototype._meta.fields)) {
-                    throw new FieldError(`No such field: ${key}`)
-                }
-
-                const field = this.model.prototype._meta.fields[key]
-                let value = excludeValues[operator][key]
-
-                if (value instanceof Array) {
-                    const _value = []
-                    for (const val of value) {
-                        field.validate(val)
-                        _value.push(field.sql(val))
-                    }
-                    value = `(${_value.join(', ')})`
-                } else {
-                    field.validate(value)
-                    value = field.sql(value)
-                }
-
-                if (operator === 'equals' && value === "NULL") {
-                    where.push(`"${key}" IS NOT NULL`)
-                } else {
-                    where.push('NOT ' + formatOperator(operator, `"${key}"`, value))
-                }
-            }
-        }
-
-        if (this.query.groupBy) {
-            let groupFields = []
-            for (const field of this.query.groupBy) {
-                groupFields.push(`"${field.replace('-', '')}"`)
-            }
-
-            const statement = `"id" IN (SELECT MIN("id") FROM "${this.model.prototype._meta.table}" GROUP BY ${groupFields.join(', ')})`
-            where.push(statement)
-        }
-
-        if (where.length > 0) {
-            sql += ' WHERE'
-            sql += ' ' + where.join(' AND ')
-        }
-
-        if (this.query.orderBy) {
-            sql += ' ORDER BY'
-            let orderFields = []
-            for (const field of this.query.orderBy) {
-                orderFields.push(` "${field.replace('-', '')}"${field[0] === '-' ? ' DESC' : ''}`)
-            }
-            sql += orderFields.join(',')
-        }
-
-        if (this.query.limit !== null) {
-            sql += ` LIMIT ${this.query.limit}`
-        }
-
-        if (this.query.offset != null) {
-            sql += ` OFFSET ${this.query.offset}`
-        }
-
-        return sql + ';'
     }
 }
 

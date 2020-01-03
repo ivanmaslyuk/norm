@@ -2,7 +2,7 @@ const inspect = Symbol.for('nodejs.util.inspect.custom')
 const util = require('util')
 
 const { Query } = require('./query')
-const { query } = require('../db/query')
+const { runSql } = require('../db/backends/base')
 
 module.exports = class BaseModel {
     constructor(values = {}, autoCreated = false) {
@@ -74,7 +74,7 @@ module.exports = class BaseModel {
             sql = `INSERT INTO "${this._meta.table}" (${fields.join(", ")}) VALUES (${values.join(", ")}) RETURNING "id";`
         }
 
-        const result = await query(sql)
+        const result = await runSql(sql)
         if (result.rows.length > 0) {
             this.id = result.rows[0].id
         }
@@ -100,7 +100,7 @@ module.exports = class BaseModel {
         }
 
         const sql = `DELETE FROM "${this._meta.table}" WHERE "id" = ${this.id};`
-        await query(sql)
+        await runSql(sql)
         this.id = null
     }
 
@@ -109,32 +109,14 @@ module.exports = class BaseModel {
     }
 
     [inspect]() {
-        let output = `\x1b[36m${this.constructor.name}\x1b[0m {\n`
+        let output = `${this.constructor.name} { `
         const fieldDescriptions = []
         for (const fieldName in this._meta.fields) {
             const value = this[fieldName]
-            let valueDescription = ''
-            switch (typeof value) {
-                case 'string':
-                    valueDescription = `\x1b[32m${util.inspect(value)}\x1b[0m`
-                    break
-                case 'number':
-                    valueDescription = `\x1b[33m${util.inspect(value)}\x1b[0m`
-                    break
-                case 'object':
-                    valueDescription = `\x1b[34m${util.inspect(value)}\x1b[0m`
-                    break
-                case 'boolean':
-                    valueDescription = `\x1b[34m${util.inspect(value)}\x1b[0m`
-                    break
-                default:
-                    valueDescription = util.inspect(value)
-                    break
-            }
-
-            fieldDescriptions.push(`  ${fieldName}: ${valueDescription}`)
+            let valueDescription = util.inspect(value)
+            fieldDescriptions.push(`${fieldName}: ${valueDescription}`)
         }
-        output += fieldDescriptions.join(',\n') + '\n}'
+        output += fieldDescriptions.join(', ') + ' }'
         return output
     }
 }

@@ -1,4 +1,4 @@
-const { FieldError } = require('./exceptions')
+const { FieldError } = require('../exceptions')
 
 function hasValue(variable) {
     return variable !== NaN && variable !== null && variable !== undefined
