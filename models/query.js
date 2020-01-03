@@ -171,12 +171,6 @@ class Query {
         return await this.filter(lookups).first()
     }
 
-    async create(values) {
-        const model = new this.model(values)
-        await model.save()
-        return model
-    }
-
     async delete() {
         const qs = this.copy()
         qs.query.action = 'DELETE'
@@ -214,4 +208,12 @@ class Query {
     }
 }
 
-module.exports = { Query }
+class InitialQuery extends Query {
+    async create(values) {
+        const model = new this.model(values)
+        await model.save()
+        return model
+    }
+}
+
+module.exports = { Query, InitialQuery }

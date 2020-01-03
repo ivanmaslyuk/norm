@@ -1,7 +1,7 @@
 const inspect = Symbol.for('nodejs.util.inspect.custom')
 const util = require('util')
 
-const { Query } = require('./query')
+const { Query, InitialQuery } = require('./query')
 const { runSql } = require('../db/backends/base')
 
 module.exports = class BaseModel {
@@ -81,7 +81,7 @@ module.exports = class BaseModel {
     }
 
     static get objects() {
-        return new Query(this)
+        return new InitialQuery(this)
     }
 
     async refreshFromDb() {
