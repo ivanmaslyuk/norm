@@ -1,58 +1,7 @@
 const fs = require('fs')
-const BaseModel = require('../../models/base')
-const { Field } = require('../../models/fields')
 const actions = require('./actions')
-const { runSql } = require('../../db/backends/base')
-
-function walk(dir, filter = [], recursive = true) {
-    const results = []
-    const list = fs.readdirSync(dir)
-    list.forEach(function (file) {
-        if (filter.length > 0 && !filter.includes(file)) {
-            return
-        }
-        file = dir + '/' + file
-        const stat = fs.statSync(file)
-        if (stat && stat.isDirectory()) {
-            if (recursive) {
-                results = results.concat(walk(file))
-            }
-        } else {
-            results.push(file)
-        }
-    })
-    return results
-}
-
-function getMigrationsDir(basePath) {
-    return basePath + '/migrations'
-}
-
-function getAllModels(basePath) {
-    const files = walk(basePath, ['models.js'])
-    const models = []
-    for (const file of files) {
-        const mod = require(file)
-        for (const key in mod) {
-            const value = mod[key]
-            if (value.prototype instanceof BaseModel) {
-                models.push(value)
-            }
-        }
-    }
-    return models
-}
-// TODO: сделать чтобы запоминалось какие миграции прогнаны!!!!
-// и исправить modyfy/alter column
-function getAllMigrations(basePath) {
-    basePath = getMigrationsDir(basePath)
-    const files = walk(basePath, [], false)
-    const migrations = []
-    for (const file of files) {
-        migrations.push(require(file))
-    }
-    return migrations
-}
+const { Field } = require('../models/fields')
+const { getAllModels, getMigrationsDir, getAllMigrations } = require('./utils')
 
 function getMigrationStates(migrations) {
     const states = {}
@@ -61,7 +10,7 @@ function getMigrationStates(migrations) {
             if (action instanceof actions.CreateModel) {
                 states[action.table] = action.fields
             }
-            if (action instanceof actions.AddField || action instanceof actions.AlterField) {
+            if (action instanceof actions.AlterField) {
                 states[action.table][action.fieldName] = action.newField
             }
             if (action instanceof actions.AddField) {
@@ -75,19 +24,6 @@ function getMigrationStates(migrations) {
     return states
 }
 
-exports.migrate = async function (basePath) {
-    console.log('migrating')
-    console.log(basePath)
-    const migrations = getAllMigrations(basePath)
-
-    for (const migration of migrations) {
-        for (const action of migration.actions) {
-            // await runSql(action.sqlUp())
-            console.log(action.sqlUp() + '\n\n' + action.sqlDown() + '\n\n\n\n')
-        }
-    }
-}
-
 function getMigrationContent(actions) {
     let content = 'const { migrations, fields } = require(\'../main\')\n\n' // TODO: change require
     content += 'module.exports.actions = [\n'
@@ -99,7 +35,7 @@ function getMigrationContent(actions) {
 }
 
 exports.makeMigrations = function (basePath) {
-    console.log('making migrations')
+    console.log('Making migrations...')
     console.log(basePath)
     const models = getAllModels(basePath)
     const migrations = getAllMigrations(basePath)
@@ -147,6 +83,5 @@ exports.makeMigrations = function (basePath) {
     if (newActions.length > 0) {
         const content = getMigrationContent(newActions)
         fs.writeFileSync(getMigrationsDir(basePath) + `/${migrations.length + 1}_migration.js`, content)
-        console.log(content)
     }
 }

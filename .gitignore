@@ -98,3 +98,5 @@ public
 .dynamodb/
 
 .vscode/
+
+test_migrations/

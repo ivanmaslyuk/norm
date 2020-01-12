@@ -1,5 +1,4 @@
 const modelUtils = require('./models/utils')
-const migrationUtils = require('./migrations/maker/utils')
 
 module.exports.makeModels = function (models) {
     for (const name in models) {
@@ -16,7 +15,7 @@ for (const field in fields) {
     }
 }
 
-const migrationActions = require('./migrations/maker/actions')
+const migrationActions = require('./migrations/actions')
 exports.migrations = {}
 for (const action in migrationActions) {
     module.exports.migrations[action] = function (info) {
@@ -57,11 +56,13 @@ exports.run = function () {
     basePath.pop()
     basePath = basePath.join('/')
     if (process.argv[2] === 'migrate') {
-        sync(migrationUtils.migrate, basePath)
+        const { migrate } = require('./migrations/runner')
+        sync(migrate, basePath)
         process.exit()
     }
     if (process.argv[2] === 'makemigrations') {
-        migrationUtils.makeMigrations(basePath)
+        const { makeMigrations } = require('./migrations/maker')
+        makeMigrations(basePath)
         process.exit()
     }
 }
