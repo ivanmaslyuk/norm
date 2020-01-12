@@ -8,6 +8,15 @@ function isInt(n) {
     return n % 1 === 0
 }
 
+const STANDARD_OPTIONS = {
+    null: false,
+    column: undefined,
+    def: undefined,
+    primaryKey: false,
+    setOnCreate: false,
+    setOnUpdate: false
+}
+
 class Field {
     constructor(options = {}) {
         this.null = hasValue(options.null) ? options.null : false
@@ -35,6 +44,17 @@ class Field {
 
     type() {
         throw 'type() is not implemented'
+    }
+
+    optionsString() {
+        const parts = []
+        for (const key in this) {
+            if (key === 'name') { continue }
+            if (this[key] !== STANDARD_OPTIONS[key]) {
+                parts.push(`${key}: ${JSON.stringify(this[key])}`)
+            }
+        }
+        return '{ ' + parts.join(', ') + ' }'
     }
 
     declaration() {

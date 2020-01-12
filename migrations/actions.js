@@ -44,7 +44,7 @@ class CreateModel extends MigrationAction {
 
         for (const fieldName in this.fields) {
             const field = this.fields[fieldName]
-            result.push(`      ${fieldName}: fields.${field.constructor.name}(${JSON.stringify(field)}),`)
+            result.push(`      ${fieldName}: fields.${field.constructor.name}(${field.optionsString()}),`)
         }
 
         result.push('    }\n  })')
@@ -73,7 +73,7 @@ class RemoveField extends MigrationAction {
             '  migrations.RemoveField({',
             `    table: "${this.table}",`,
             `    fieldName: "${this.fieldName}",`,
-            `    field: fields.${this.field.constructor.name}(${JSON.stringify(this.field)})`,
+            `    field: fields.${this.field.constructor.name}(${field.optionsString()})`,
             '  })'
         ]
 
@@ -102,7 +102,7 @@ class AddField extends MigrationAction {
             '  migrations.AddField({',
             `    table: "${this.table}",`,
             `    fieldName: "${this.fieldName}",`,
-            `    field: fields.${this.field.constructor.name}(${JSON.stringify(this.field)})`,
+            `    field: fields.${this.field.constructor.name}(${field.optionsString()})`,
             '  })'
         ]
 
@@ -154,8 +154,8 @@ class AlterField extends MigrationAction {
             '  migrations.AlterField({',
             `    table: "${this.table}",`,
             `    fieldName: "${this.fieldName}",`,
-            `    newDeclaration: fields.${this.newField.constructor.name}(${JSON.stringify(this.newField)}),`,
-            `    oldDeclaration: fields.${this.oldField.constructor.name}(${JSON.stringify(this.oldField)})`,
+            `    newDeclaration: fields.${this.newField.constructor.name}(${field.optionsString()}),`,
+            `    oldDeclaration: fields.${this.oldField.constructor.name}(${field.optionsString()})`,
             '  })'
         ]
 
@@ -164,6 +164,14 @@ class AlterField extends MigrationAction {
 }
 
 class RenameField extends MigrationAction {
+
+}
+
+class DeleteModel extends MigrationAction {
+
+}
+
+class RenameModel extends MigrationAction {
 
 }
 
