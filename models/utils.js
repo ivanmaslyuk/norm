@@ -19,7 +19,7 @@ exports.makeModel = function (name, fields) {
     }
 
     Model.prototype._meta.fields = {}
-    Model.prototype._meta.fields.id = new AutoField()
+    Model.prototype._meta.fields.id = new AutoField({ primaryKey: true })
     for (const key in fields) {
         if (fields[key] instanceof Field) {
             fields[key].name = key

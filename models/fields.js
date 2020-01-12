@@ -15,6 +15,7 @@ class Field {
         if (options.def !== undefined) {
             this.def = options.def
         }
+        this.primaryKey = options.primaryKey || false
     }
 
     validate(value) {
@@ -30,6 +31,28 @@ class Field {
 
     sql(value) {
         return value
+    }
+
+    type() {
+        throw 'type() is not implemented'
+    }
+
+    declaration() {
+        const parts = [this.type()]
+        if (this.primaryKey) {
+            parts.push('PRIMARY KEY')
+        }
+        if (!this.null) {
+            parts.push('NOT NULL')
+        }
+        if (this.def) {
+            parts.push(`DEFAULT ${this.sql(this.def)}`)
+        }
+        return parts.join(' ')
+    }
+
+    static equal(left, right) {
+        return left.declaration() === right.declaration() && left.column === right.column
     }
 }
 
@@ -58,6 +81,10 @@ class CharField extends Field {
     sql(value) {
         return hasValue(value) ? `'${value}'` : 'NULL'
     }
+
+    type() {
+        return `VARCHAR(${this.maxLength})`
+    }
 }
 
 class BooleanField extends Field {
@@ -73,6 +100,9 @@ class BooleanField extends Field {
     sql(value) {
         if (value === null) { return 'NULL' }
         return value === true ? 'TRUE' : "FALSE"
+    }
+    type() {
+        return 'BOOLEAN'
     }
 }
 
@@ -90,9 +120,16 @@ class IntegerField extends Field {
     sql(value) {
         return hasValue(value) ? value.toString() : 'NULL'
     }
+
+    type() {
+        return 'INTEGER'
+    }
 }
 
 class AutoField extends Field {
+    type() {
+        return 'SERIAL'
+    }
     validateForSaving() { }
     validate(value) {
         if (!hasValue(value)) {
@@ -131,6 +168,10 @@ class DateTimeField extends Field {
             return `to_timestamp('${value}', 'YYYY-MM-DD HH24:MI:SS')`
         }
         return 'NULL';
+    }
+
+    type() {
+        return 'TIMESTAMP'
     }
 }
 
