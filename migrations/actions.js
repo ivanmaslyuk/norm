@@ -73,7 +73,7 @@ class RemoveField extends MigrationAction {
             '  migrations.RemoveField({',
             `    table: "${this.table}",`,
             `    fieldName: "${this.fieldName}",`,
-            `    field: fields.${this.field.constructor.name}(${field.optionsString()})`,
+            `    field: fields.${this.field.constructor.name}(${this.field.optionsString()})`,
             '  })'
         ]
 
@@ -102,7 +102,7 @@ class AddField extends MigrationAction {
             '  migrations.AddField({',
             `    table: "${this.table}",`,
             `    fieldName: "${this.fieldName}",`,
-            `    field: fields.${this.field.constructor.name}(${field.optionsString()})`,
+            `    field: fields.${this.field.constructor.name}(${this.field.optionsString()})`,
             '  })'
         ]
 
@@ -154,8 +154,8 @@ class AlterField extends MigrationAction {
             '  migrations.AlterField({',
             `    table: "${this.table}",`,
             `    fieldName: "${this.fieldName}",`,
-            `    newDeclaration: fields.${this.newField.constructor.name}(${field.optionsString()}),`,
-            `    oldDeclaration: fields.${this.oldField.constructor.name}(${field.optionsString()})`,
+            `    newDeclaration: fields.${this.newField.constructor.name}(${this.newField.optionsString()}),`,
+            `    oldDeclaration: fields.${this.oldField.constructor.name}(${this.oldField.optionsString()})`,
             '  })'
         ]
 

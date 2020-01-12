@@ -34,6 +34,18 @@ function getMigrationContent(actions) {
     return content
 }
 
+function getMigrationName(number) {
+    const dt = new Date()
+    const time = [
+        String(dt.getDate()).padStart(2, '0'),
+        String(dt.getMonth() + 1).padStart(2, '0'),
+        dt.getFullYear(),
+        String(dt.getHours()).padStart(2, '0'),
+        String(dt.getMinutes()).padStart(2, '0')
+    ]
+    return `${String(number).padStart(4, '0')}_migration_${time.join('_')}`
+}
+
 exports.makeMigrations = function (basePath) {
     console.log('Making migrations...')
     console.log(basePath)
@@ -82,6 +94,7 @@ exports.makeMigrations = function (basePath) {
 
     if (newActions.length > 0) {
         const content = getMigrationContent(newActions)
-        fs.writeFileSync(getMigrationsDir(basePath) + `/${migrations.length + 1}_migration.js`, content)
+        const number = migrations.length + 1
+        fs.writeFileSync(getMigrationsDir(basePath) + `/${getMigrationName(number)}.js`, content)
     }
 }

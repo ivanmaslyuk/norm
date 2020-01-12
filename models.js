@@ -6,7 +6,6 @@ exports.Test = {
     firstName: fields.CharField({ maxLength: 100, null: true }),
     lastName: fields.CharField({ maxLength: 100, null: true }),
     isSuperuser: fields.BooleanField({ null: true }),
-    height: fields.IntegerField({ null: true }),
     createdAt: fields.DateTimeField({ null: true }),
 
     fullName() {
