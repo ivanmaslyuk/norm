@@ -168,11 +168,47 @@ class RenameField extends MigrationAction {
 }
 
 class DeleteModel extends MigrationAction {
+    constructor(info) {
+        super()
+        this.table = info.table
+        this.fields = info.fields
+    }
 
+    sqlUp() {
+        return `DROP TABLE "${this.table}";`
+    }
+
+    sqlDown() {
+        let result = `CREATE TABLE "${this.table}" (`
+        const fieldDeclarations = []
+        for (const fieldName in this.fields) {
+            const field = this.fields[fieldName]
+            const decl = `"${field.column || fieldName}" ${field.declaration()}`
+            fieldDeclarations.push(decl)
+        }
+        result += fieldDeclarations.join(', ')
+        return result + ');'
+    }
+
+    js() {
+        let result = [
+            '  migrations.DeleteModel({',
+            `    table: "${this.table}",`,
+            '    fields: {',
+        ]
+
+        for (const fieldName in this.fields) {
+            const field = this.fields[fieldName]
+            result.push(`      ${fieldName}: fields.${field.constructor.name}(${field.optionsString()}),`)
+        }
+
+        result.push('    }\n  })')
+        return result.join('\n')
+    }
 }
 
 class RenameModel extends MigrationAction {
 
 }
 
-module.exports = { CreateModel, RemoveField, AddField, AlterField }
+module.exports = { CreateModel, RemoveField, AddField, AlterField, DeleteModel }

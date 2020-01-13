@@ -19,6 +19,9 @@ function getMigrationStates(migrations) {
             if (action instanceof actions.RemoveField) {
                 delete states[action.table][action.fieldName]
             }
+            if (action instanceof actions.DeleteModel) {
+                delete states[action.table]
+            }
         }
     }
     return states
@@ -90,6 +93,20 @@ exports.makeMigrations = function (basePath) {
             }
         }
 
+    }
+
+    for (const table in states) {
+        let wasDeleted = true
+        for (const model of models) {
+            if (model.prototype._meta.table === table) {
+                wasDeleted = false
+                break
+            }
+        }
+
+        if (wasDeleted) {
+            newActions.push(new actions.DeleteModel({ table, fields: states[table] }))
+        }
     }
 
     if (newActions.length > 0) {
