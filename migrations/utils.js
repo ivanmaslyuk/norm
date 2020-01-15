@@ -1,4 +1,5 @@
 const fs = require('fs')
+const readline = require('readline')
 const BaseModel = require('../models/base')
 
 function walk(dir, filter = [], recursive = true) {
@@ -59,4 +60,18 @@ function getAllMigrations(basePath) {
     return migrations
 }
 
-module.exports = { getAllModels, getMigrationsDir, getAllMigrations }
+function readLine(question) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    })
+
+    return new Promise((resolve, reject) => {
+        rl.question(question, (answer) => {
+            resolve(answer)
+            rl.close()
+        })
+    })
+}
+
+module.exports = { getAllModels, getMigrationsDir, getAllMigrations, readLine }

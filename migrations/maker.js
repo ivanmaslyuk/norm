@@ -1,7 +1,7 @@
 const fs = require('fs')
 const actions = require('./actions')
 const { Field } = require('../models/fields')
-const { getAllModels, getMigrationsDir, getAllMigrations } = require('./utils')
+const { getAllModels, getMigrationsDir, getAllMigrations, readLine } = require('./utils')
 
 function getMigrationStates(migrations) {
     const states = {}
@@ -21,6 +21,10 @@ function getMigrationStates(migrations) {
             }
             if (action instanceof actions.DeleteModel) {
                 delete states[action.table]
+            }
+            if (action instanceof actions.RenameField) {
+                states[action.table][action.newName] = states[action.table][action.oldName]
+                delete states[action.table][action.oldName]
             }
         }
     }
@@ -49,14 +53,14 @@ function getMigrationName(number) {
     return `${String(number).padStart(4, '0')}_migration_${time.join('_')}`
 }
 
-exports.makeMigrations = function (basePath) {
+exports.makeMigrations = async function (basePath) {
     console.log('Making migrations...')
     console.log(basePath)
     const models = getAllModels(basePath)
     const migrations = getAllMigrations(basePath)
     const states = getMigrationStates(migrations)
 
-    const newActions = []
+    let newActions = []
     for (const model of models) {
         const table = model.prototype._meta.table
         const fields = model.prototype._meta.fields
@@ -68,15 +72,41 @@ exports.makeMigrations = function (basePath) {
 
         const state = states[table]
 
+        for (const fieldName in fields) {
+            if (!(fieldName in state)) {
+                const field = fields[fieldName]
+                newActions.push(new actions.AddField({ table, fieldName, field }))
+            }
+        }
+
         for (const fieldName in state) {
             const field = fields[fieldName]
             const fieldPreviousState = state[fieldName]
             if (!(fieldName in fields)) {
-                newActions.push(new actions.RemoveField({ table, fieldName, field: fieldPreviousState }))
-                continue
+
+                // If newActions contains an AddField action with the same declaration and same model,
+                // ask the user if they renamed the field.
+                let renamed = false
+                for (const action of newActions) {
+                    if (action.table === table &&
+                        action instanceof actions.AddField &&
+                        action.field.declaration() === fieldPreviousState.declaration()) {
+                        const response = await readLine(`Did you rename the field '${fieldName}' to '${action.fieldName}'? `)
+                        renamed = ['y', 'yes'].includes(response.toLowerCase())
+                        if (renamed) {
+                            newActions = newActions.filter(a => a !== action)
+                            newActions.push(new actions.RenameField({ table, oldName: fieldName, newName: action.fieldName }))
+                        }
+                        break
+                    }
+                }
+
+                if (!renamed) {
+                    newActions.push(new actions.RemoveField({ table, fieldName, field: fieldPreviousState }))
+                }
             }
 
-            if (!Field.equal(field, fieldPreviousState)) {
+            else if (!Field.equal(field, fieldPreviousState)) {
                 newActions.push(new actions.AlterField({
                     table,
                     fieldName,
@@ -85,14 +115,6 @@ exports.makeMigrations = function (basePath) {
                 }))
             }
         }
-
-        for (const fieldName in fields) {
-            if (!(fieldName in state)) {
-                const field = fields[fieldName]
-                newActions.push(new actions.AddField({ table, fieldName, field }))
-            }
-        }
-
     }
 
     for (const table in states) {

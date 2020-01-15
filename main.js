@@ -62,7 +62,7 @@ exports.run = function () {
     }
     if (process.argv[2] === 'makemigrations') {
         const { makeMigrations } = require('./migrations/maker')
-        makeMigrations(basePath)
+        sync(makeMigrations, basePath)
         process.exit()
     }
 }

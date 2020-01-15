@@ -120,11 +120,11 @@ class AlterField extends MigrationAction {
     }
 
     getSql(newField, oldField) {
-        const start = `ALTER TABLE "${this.table}" ALTER COLUMN "${newField.column || this.fieldName}"`
         let result = ''
-        // if (newField.column !== oldField.column) {
-        //     result += `ALTER TABLE "${this.table}" RENAME COLUMN "${oldField.column || this.fieldName}" TO "${newField.column || this.fieldName}";`
-        // }
+        if (newField.column !== oldField.column) {
+            result += `ALTER TABLE "${this.table}" RENAME COLUMN "${oldField.column || this.fieldName}" TO "${newField.column || this.fieldName}";`
+        }
+        const start = `ALTER TABLE "${this.table}" ALTER COLUMN "${newField.column || this.fieldName}"`
         if (newField.type() !== oldField.type()) {
             result += `${start} TYPE ${newField.type()};`
         }
@@ -161,10 +161,6 @@ class AlterField extends MigrationAction {
 
         return result.join('\n')
     }
-}
-
-class RenameField extends MigrationAction {
-
 }
 
 class DeleteModel extends MigrationAction {
@@ -207,8 +203,25 @@ class DeleteModel extends MigrationAction {
     }
 }
 
-class RenameModel extends MigrationAction {
+class RenameField extends MigrationAction {
+    constructor(info) {
+        super()
+        this.table = info.table
+        this.oldName = info.oldName
+        this.newName = info.newName
+    }
 
+    js() {
+        return [
+            '  migrations.RenameField({',
+            `    table: "${this.table}",`,
+            `    oldName: "${this.oldName}",`,
+            `    newName: "${this.newName}"`,
+            '  })'
+        ].join('\n')
+    }
 }
 
-module.exports = { CreateModel, RemoveField, AddField, AlterField, DeleteModel }
+class RenameModel extends MigrationAction { }
+
+module.exports = { CreateModel, RemoveField, AddField, AlterField, DeleteModel, RenameField, RenameModel }
