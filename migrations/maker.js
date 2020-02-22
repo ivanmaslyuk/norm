@@ -8,23 +8,23 @@ function getMigrationStates(migrations) {
     for (const migration of migrations) {
         for (const action of migration.actions) {
             if (action instanceof actions.CreateModel) {
-                states[action.table] = action.fields
+                states[action.modelName] = action.fields
             }
             if (action instanceof actions.AlterField) {
-                states[action.table][action.fieldName] = action.newField
+                states[action.modelName][action.fieldName] = action.newField
             }
             if (action instanceof actions.AddField) {
-                states[action.table][action.fieldName] = action.field
+                states[action.modelName][action.fieldName] = action.field
             }
             if (action instanceof actions.RemoveField) {
-                delete states[action.table][action.fieldName]
+                delete states[action.modelName][action.fieldName]
             }
             if (action instanceof actions.DeleteModel) {
-                delete states[action.table]
+                delete states[action.modelName]
             }
             if (action instanceof actions.RenameField) {
-                states[action.table][action.newName] = states[action.table][action.oldName]
-                delete states[action.table][action.oldName]
+                states[action.modelName][action.newName] = states[action.modelName][action.oldName]
+                delete states[action.modelName][action.oldName]
             }
         }
     }
@@ -61,21 +61,21 @@ exports.makeMigrations = async function (basePath) {
     const states = getMigrationStates(migrations)
 
     let newActions = []
-    for (const model of models) {
-        const table = model.prototype._meta.table
+    for (const modelName in models) {
+        const model = models[modelName]
         const fields = model.prototype._meta.fields
 
-        if (!(table in states)) {
-            newActions.push(new actions.CreateModel({ table, fields }))
+        if (!(modelName in states)) {
+            newActions.push(new actions.CreateModel({ modelName, fields }))
             continue
         }
 
-        const state = states[table]
+        const state = states[modelName]
 
         for (const fieldName in fields) {
             if (!(fieldName in state)) {
                 const field = fields[fieldName]
-                newActions.push(new actions.AddField({ table, fieldName, field }))
+                newActions.push(new actions.AddField({ modelName, fieldName, field }))
             }
         }
 
@@ -88,27 +88,27 @@ exports.makeMigrations = async function (basePath) {
                 // ask the user if they renamed the field.
                 let renamed = false
                 for (const action of newActions) {
-                    if (action.table === table &&
+                    if (action.modelName === modelName &&
                         action instanceof actions.AddField &&
                         action.field.declaration() === fieldPreviousState.declaration()) {
                         const response = await readLine(`Did you rename the field '${fieldName}' to '${action.fieldName}'? `)
                         renamed = ['y', 'yes'].includes(response.toLowerCase())
                         if (renamed) {
                             newActions = newActions.filter(a => a !== action)
-                            newActions.push(new actions.RenameField({ table, oldName: fieldName, newName: action.fieldName }))
+                            newActions.push(new actions.RenameField({ modelName, oldName: fieldName, newName: action.fieldName }))
                         }
                         break
                     }
                 }
 
                 if (!renamed) {
-                    newActions.push(new actions.RemoveField({ table, fieldName, field: fieldPreviousState }))
+                    newActions.push(new actions.RemoveField({ modelName, fieldName, field: fieldPreviousState }))
                 }
             }
 
             else if (!Field.equal(field, fieldPreviousState)) {
                 newActions.push(new actions.AlterField({
-                    table,
+                    modelName,
                     fieldName,
                     newDeclaration: field,
                     oldDeclaration: state[fieldName]
@@ -117,17 +117,9 @@ exports.makeMigrations = async function (basePath) {
         }
     }
 
-    for (const table in states) {
-        let wasDeleted = true
-        for (const model of models) {
-            if (model.prototype._meta.table === table) {
-                wasDeleted = false
-                break
-            }
-        }
-
-        if (wasDeleted) {
-            newActions.push(new actions.DeleteModel({ table, fields: states[table] }))
+    for (const modelName in states) {
+        if (!(modelName in models)) {
+            newActions.push(new actions.DeleteModel({ modelName, fields: states[modelName] }))
         }
     }
 

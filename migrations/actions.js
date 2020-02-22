@@ -1,10 +1,10 @@
 class MigrationAction {
-    sqlUp() {
-        throw 'Not implemented.'
+    sqlUp(models) {
+        throw 'sqlUp() not implemented.'
     }
 
-    sqlDown() {
-        throw 'Not implemented.'
+    sqlDown(models) {
+        throw 'sqlDown() not implemented.'
     }
 
     js() {
@@ -15,12 +15,13 @@ class MigrationAction {
 class CreateModel extends MigrationAction {
     constructor(info) {
         super()
-        this.table = info.table
+        this.modelName = info.modelName
         this.fields = info.fields
     }
 
-    sqlUp() {
-        let result = `CREATE TABLE "${this.table}" (`
+    sqlUp(models) {
+        const model = models[this.modelName]
+        let result = `CREATE TABLE "${model.prototype._meta.table}" (`
         const fieldDeclarations = []
         for (const fieldName in this.fields) {
             const field = this.fields[fieldName]
@@ -31,14 +32,15 @@ class CreateModel extends MigrationAction {
         return result + ');'
     }
 
-    sqlDown() {
-        return `DROP TABLE "${this.table}";`
+    sqlDown(models) {
+        const model = models[this.modelName]
+        return `DROP TABLE "${model.prototype._meta.table}";`
     }
 
     js() {
         let result = [
             '  migrations.CreateModel({',
-            `    table: "${this.table}",`,
+            `    modelName: "${this.modelName}",`,
             '    fields: {',
         ]
 
@@ -55,23 +57,25 @@ class CreateModel extends MigrationAction {
 class RemoveField extends MigrationAction {
     constructor(info) {
         super()
-        this.table = info.table
+        this.modelName = info.modelName
         this.fieldName = info.fieldName
         this.field = info.field
     }
 
-    sqlUp() {
-        return `ALTER TABLE "${this.table}" DROP COLUMN "${this.field.column || this.fieldName}";`
+    sqlUp(models) {
+        const model = models[this.modelName]
+        return `ALTER TABLE "${model.prototype._meta.table}" DROP COLUMN "${this.field.column || this.fieldName}";`
     }
 
-    sqlDown() {
-        return `ALTER TABLE "${this.table}" ADD COLUMN "${this.field.column || this.fieldName}" ${this.field.declaration()}`
+    sqlDown(models) {
+        const model = models[this.modelName]
+        return `ALTER TABLE "${model.prototype._meta.table}" ADD COLUMN "${this.field.column || this.fieldName}" ${this.field.declaration()}`
     }
 
     js() {
         let result = [
             '  migrations.RemoveField({',
-            `    table: "${this.table}",`,
+            `    modelName: "${this.modelName}",`,
             `    fieldName: "${this.fieldName}",`,
             `    field: fields.${this.field.constructor.name}(${this.field.optionsString()})`,
             '  })'
@@ -84,23 +88,25 @@ class RemoveField extends MigrationAction {
 class AddField extends MigrationAction {
     constructor(info) {
         super()
-        this.table = info.table
+        this.modelName = info.modelName
         this.fieldName = info.fieldName
         this.field = info.field
     }
 
-    sqlUp() {
-        return `ALTER TABLE "${this.table}" ADD COLUMN "${this.field.column || this.fieldName}" ${this.field.declaration()}`
+    sqlUp(models) {
+        const model = models[this.modelName]
+        return `ALTER TABLE "${model.prototype._meta.table}" ADD COLUMN "${this.field.column || this.fieldName}" ${this.field.declaration()}`
     }
 
-    sqlDown() {
-        return `ALTER TABLE "${this.table}" DROP COLUMN "${this.field.column || this.fieldName}";`
+    sqlDown(models) {
+        const model = models[this.modelName]
+        return `ALTER TABLE "${model.prototype._meta.table}" DROP COLUMN "${this.field.column || this.fieldName}";`
     }
 
     js() {
         let result = [
             '  migrations.AddField({',
-            `    table: "${this.table}",`,
+            `    modelName: "${this.modelName}",`,
             `    fieldName: "${this.fieldName}",`,
             `    field: fields.${this.field.constructor.name}(${this.field.optionsString()})`,
             '  })'
@@ -113,18 +119,20 @@ class AddField extends MigrationAction {
 class AlterField extends MigrationAction {
     constructor(info) {
         super()
-        this.table = info.table
+        this.modelName = info.modelName
         this.fieldName = info.fieldName
         this.newField = info.newDeclaration
         this.oldField = info.oldDeclaration
     }
 
-    getSql(newField, oldField) {
+    getSql(models, newField, oldField) {
+        const model = models[this.modelName]
+        const tableName = model.prototype._meta.table
         let result = ''
         if (newField.column !== oldField.column) {
-            result += `ALTER TABLE "${this.table}" RENAME COLUMN "${oldField.column || this.fieldName}" TO "${newField.column || this.fieldName}";`
+            result += `ALTER TABLE "${tableName}" RENAME COLUMN "${oldField.column || this.fieldName}" TO "${newField.column || this.fieldName}";`
         }
-        const start = `ALTER TABLE "${this.table}" ALTER COLUMN "${newField.column || this.fieldName}"`
+        const start = `ALTER TABLE "${tableName}" ALTER COLUMN "${newField.column || this.fieldName}"`
         if (newField.type() !== oldField.type()) {
             result += `${start} TYPE ${newField.type()};`
         }
@@ -141,18 +149,18 @@ class AlterField extends MigrationAction {
         return result
     }
 
-    sqlUp() {
-        return this.getSql(this.newField, this.oldField)
+    sqlUp(models) {
+        return this.getSql(models, this.newField, this.oldField)
     }
 
-    sqlDown() {
-        return this.getSql(this.oldField, this.newField)
+    sqlDown(models) {
+        return this.getSql(models, this.oldField, this.newField)
     }
 
     js() {
         let result = [
             '  migrations.AlterField({',
-            `    table: "${this.table}",`,
+            `    modelName: "${this.modelName}",`,
             `    fieldName: "${this.fieldName}",`,
             `    newDeclaration: fields.${this.newField.constructor.name}(${this.newField.optionsString()}),`,
             `    oldDeclaration: fields.${this.oldField.constructor.name}(${this.oldField.optionsString()})`,
@@ -166,16 +174,18 @@ class AlterField extends MigrationAction {
 class DeleteModel extends MigrationAction {
     constructor(info) {
         super()
-        this.table = info.table
+        this.modelName = info.modelName
         this.fields = info.fields
     }
 
-    sqlUp() {
-        return `DROP TABLE "${this.table}";`
+    sqlUp(models) {
+        const model = models[this.modelName]
+        return `DROP TABLE "${model.prototype._meta.table}";`
     }
 
-    sqlDown() {
-        let result = `CREATE TABLE "${this.table}" (`
+    sqlDown(models) {
+        const model = models[this.modelName]
+        let result = `CREATE TABLE "${model.prototype._meta.table}" (`
         const fieldDeclarations = []
         for (const fieldName in this.fields) {
             const field = this.fields[fieldName]
@@ -189,7 +199,7 @@ class DeleteModel extends MigrationAction {
     js() {
         let result = [
             '  migrations.DeleteModel({',
-            `    table: "${this.table}",`,
+            `    modelName: "${this.modelName}",`,
             '    fields: {',
         ]
 
@@ -206,7 +216,7 @@ class DeleteModel extends MigrationAction {
 class RenameField extends MigrationAction {
     constructor(info) {
         super()
-        this.table = info.table
+        this.modelName = info.modelName
         this.oldName = info.oldName
         this.newName = info.newName
     }
@@ -214,7 +224,7 @@ class RenameField extends MigrationAction {
     js() {
         return [
             '  migrations.RenameField({',
-            `    table: "${this.table}",`,
+            `    modelName: "${this.modelName}",`,
             `    oldName: "${this.oldName}",`,
             `    newName: "${this.newName}"`,
             '  })'

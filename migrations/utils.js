@@ -29,13 +29,13 @@ function getMigrationsDir(basePath) {
 
 function getAllModels(basePath) {
     const files = walk(basePath, ['models.js'])
-    const models = []
+    const models = {}
     for (const file of files) {
         const mod = require(file)
         for (const key in mod) {
             const value = mod[key]
             if (value.prototype instanceof BaseModel) {
-                models.push(value)
+                models[value.prototype.constructor.name.toLowerCase()] = value
             }
         }
     }
