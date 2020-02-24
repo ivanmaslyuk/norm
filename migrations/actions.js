@@ -221,6 +221,20 @@ class RenameField extends MigrationAction {
         this.newName = info.newName
     }
 
+    getSql(models, from, to) {
+        const model = models[this.modelName]
+        const table = model.prototype._meta.table
+        return `ALTER TABLE "${table}" RENAME COLUMN "${from}" TO "${to}";`
+    }
+
+    sqlUp(models) {
+        return this.getSql(models, this.oldName, this.newName)
+    }
+
+    sqlDown(models) {
+        return this.getSql(models, this.newName, this.oldName)
+    }
+
     js() {
         return [
             '  migrations.RenameField({',
