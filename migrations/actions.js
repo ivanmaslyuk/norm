@@ -8,7 +8,7 @@ class MigrationAction {
     }
 
     js() {
-        throw 'Not implemented.'
+        throw 'js() not implemented.'
     }
 }
 
@@ -223,6 +223,10 @@ class RenameField extends MigrationAction {
 
     getSql(models, from, to) {
         const model = models[this.modelName]
+        // Don't do anything if field has custom column name
+        if (model.prototype._meta.fields[to].column) {
+            return ''
+        }
         const table = model.prototype._meta.table
         return `ALTER TABLE "${table}" RENAME COLUMN "${from}" TO "${to}";`
     }
@@ -246,6 +250,39 @@ class RenameField extends MigrationAction {
     }
 }
 
-class RenameModel extends MigrationAction { }
+class RenameModel extends MigrationAction {
+    constructor(info) {
+        super()
+        this.oldName = info.oldName
+        this.newName = info.newName
+    }
+
+    getSql(models, from, to) {
+        const model = models[to]
+        const tableName = model.prototype._meta.table
+        // Don't do anything if model has custom table name
+        if (tableName != to.toLowerCase()) {
+            return ''
+        }
+        return `ALTER TABLE "${from}" RENAME TO "${to}";`
+    }
+
+    sqlUp(models) {
+        return this.getSql(models, this.oldName, this.newName)
+    }
+
+    sqlDown(models) {
+        return this.getSql(models, this.newName, this.oldName)
+    }
+
+    js() {
+        return [
+            '  migrations.RenameModel({',
+            `    oldName: "${this.oldName}",`,
+            `    newName: "${this.newName}"`,
+            '  })'
+        ].join('\n')
+    }
+}
 
 module.exports = { CreateModel, RemoveField, AddField, AlterField, DeleteModel, RenameField, RenameModel }

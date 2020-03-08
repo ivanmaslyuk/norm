@@ -1,7 +1,7 @@
 const fs = require('fs')
 const actions = require('./actions')
 const { Field } = require('../models/fields')
-const { getAllModels, getMigrationsDir, getAllMigrations, readLine } = require('./utils')
+const { getAllModels, getMigrationsDir, getAllMigrations, readLine, arraysEqual } = require('./utils')
 
 function getMigrationStates(migrations) {
     const states = {}
@@ -25,6 +25,10 @@ function getMigrationStates(migrations) {
             if (action instanceof actions.RenameField) {
                 states[action.modelName][action.newName] = states[action.modelName][action.oldName]
                 delete states[action.modelName][action.oldName]
+            }
+            if (action instanceof actions.RenameModel) {
+                states[action.newName] = states[action.oldName]
+                delete states[action.oldName]
             }
         }
     }
@@ -88,14 +92,18 @@ exports.makeMigrations = async function (basePath) {
                 // ask the user if they renamed the field.
                 let renamed = false
                 for (const action of newActions) {
-                    if (action.modelName === modelName &&
-                        action instanceof actions.AddField &&
-                        action.field.declaration() === fieldPreviousState.declaration()) {
+                    const sameModel = action.modelName === modelName
+                    const sameDeclaration = action.field.declaration() === fieldPreviousState.declaration()
+                    if (action instanceof actions.AddField && sameModel && sameDeclaration) {
                         const response = await readLine(`Did you rename the field '${fieldName}' to '${action.fieldName}'? `)
                         renamed = ['y', 'yes'].includes(response.toLowerCase())
                         if (renamed) {
                             newActions = newActions.filter(a => a !== action)
-                            newActions.push(new actions.RenameField({ modelName, oldName: fieldName, newName: action.fieldName }))
+                            newActions.push(new actions.RenameField({
+                                modelName,
+                                oldName: fieldName,
+                                newName: action.fieldName
+                            }))
                         }
                         break
                     }
@@ -119,7 +127,25 @@ exports.makeMigrations = async function (basePath) {
 
     for (const modelName in states) {
         if (!(modelName in models)) {
-            newActions.push(new actions.DeleteModel({ modelName, fields: states[modelName] }))
+            let renamed = false
+            for (const action of newActions) {
+                sameFields = arraysEqual(Object.keys(action.fields), Object.keys(states[modelName]))
+                if (action instanceof actions.CreateModel && sameFields) {
+                    const response = await readLine(`Did you rename the model '${modelName}' to '${action.modelName}'? `)
+                    renamed = ['y', 'yes'].includes(response.toLowerCase())
+                    if (renamed) {
+                        newActions = newActions.filter(a => a !== action)
+                        newActions.push(new actions.RenameModel({
+                            oldName: modelName,
+                            newName: action.modelName
+                        }))
+                    }
+                }
+            }
+
+            if (!renamed) {
+                newActions.push(new actions.DeleteModel({ modelName, fields: states[modelName] }))
+            }
         }
     }
 

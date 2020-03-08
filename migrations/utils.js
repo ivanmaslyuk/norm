@@ -27,6 +27,12 @@ function getMigrationsDir(basePath) {
     return basePath + '/test_migrations'
 }
 
+function arraysEqual(left, right) {
+    return left.length === right.length && left.sort().every(function (value, index) {
+        return value === right.sort()[index]
+    })
+}
+
 function getAllModels(basePath) {
     const files = walk(basePath, ['models.js'])
     const models = {}
@@ -74,4 +80,4 @@ function readLine(question) {
     })
 }
 
-module.exports = { getAllModels, getMigrationsDir, getAllMigrations, readLine }
+module.exports = { getAllModels, getMigrationsDir, getAllMigrations, readLine, arraysEqual }
