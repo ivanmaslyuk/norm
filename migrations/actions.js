@@ -285,4 +285,41 @@ class RenameModel extends MigrationAction {
     }
 }
 
-module.exports = { CreateModel, RemoveField, AddField, AlterField, DeleteModel, RenameField, RenameModel }
+class RenameTable extends MigrationAction {
+    constructor(info) {
+        super()
+        this.modelName = info.modelName
+        this.tableName = info.tableName
+        this.oldName = info.oldName
+    }
+
+    sqlUp(models) {
+        return `ALTER TABLE ${this.oldName} RENAME TO ${this.tableName};`
+    }
+
+    sqlDown(models) {
+        return `ALTER TABLE ${this.tableName} RENAME TO ${this.oldName};`
+    }
+
+    js() {
+        const actionName = this.constructor.name
+        return [
+            `  migrations.${actionName}({`,
+            `    modelName: "${this.modelName}",`,
+            `    tableName: "${this.tableName}"`,
+            `    oldName: "${this.oldName}"`,
+            '  })'
+        ].join('\n')
+    }
+}
+
+module.exports = {
+    CreateModel,
+    RemoveField,
+    AddField,
+    AlterField,
+    DeleteModel,
+    RenameField,
+    RenameModel,
+    RenameTable,
+}
