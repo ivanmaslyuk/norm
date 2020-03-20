@@ -9,6 +9,7 @@ function getMigrationStates(migrations) {
         for (const action of migration.actions) {
             if (action instanceof actions.CreateModel) {
                 states[action.modelName] = action.fields
+                states[action.modelName]['_meta'] = action.meta || {}
             }
             if (action instanceof actions.AlterField) {
                 states[action.modelName][action.fieldName] = action.newField
@@ -29,6 +30,9 @@ function getMigrationStates(migrations) {
             if (action instanceof actions.RenameModel) {
                 states[action.newName] = states[action.oldName]
                 delete states[action.oldName]
+            }
+            if (action instanceof actions.RenameTable) {
+                states[action.modelName]['_meta']['table'] = action.tableName
             }
         }
     }
@@ -70,11 +74,21 @@ exports.makeMigrations = async function (basePath) {
         const fields = model.prototype._meta.fields
 
         if (!(modelName in states)) {
-            newActions.push(new actions.CreateModel({ modelName, fields }))
+            const meta = JSON.parse(JSON.stringify(model.prototype._meta))
+            delete meta['fields']
+            newActions.push(new actions.CreateModel({ modelName, fields, meta }))
             continue
         }
 
         const state = states[modelName]
+
+        if (model.prototype._meta.table !== state._meta['table']) {
+            newActions.push(new actions.RenameTable({
+                modelName: modelName,
+                tableName: model.prototype._meta.table,
+                oldName: state._meta['table']
+            }))
+        }
 
         for (const fieldName in fields) {
             if (!(fieldName in state)) {
@@ -84,6 +98,8 @@ exports.makeMigrations = async function (basePath) {
         }
 
         for (const fieldName in state) {
+            if (fieldName === '_meta') { continue }
+
             const field = fields[fieldName]
             const fieldPreviousState = state[fieldName]
             if (!(fieldName in fields)) {

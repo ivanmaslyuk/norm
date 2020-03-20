@@ -108,6 +108,10 @@ module.exports = class BaseModel {
         return this.id !== null && this.id !== undefined
     }
 
+    static get defaultTableName() {
+        return this.prototype.constructor.name.toLowerCase()
+    }
+
     [inspect]() {
         let output = `${this.constructor.name} { `
         const fieldDescriptions = []

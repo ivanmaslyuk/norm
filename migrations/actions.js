@@ -17,6 +17,7 @@ class CreateModel extends MigrationAction {
         super()
         this.modelName = info.modelName
         this.fields = info.fields
+        this.meta = info.meta
     }
 
     sqlUp(models) {
@@ -49,7 +50,18 @@ class CreateModel extends MigrationAction {
             result.push(`      ${fieldName}: fields.${field.constructor.name}(${field.optionsString()}),`)
         }
 
-        result.push('    }\n  })')
+        result.push('    },')
+
+        if (Object.keys(this.meta).length > 0) {
+            result.push('    meta: {')
+            for (const optionName in this.meta) {
+                const option = this.meta[optionName]
+                result.push(`      ${optionName}: ${JSON.stringify(option)}`)
+            }
+            result.push('    },')
+        }
+
+        result.push('  })')
         return result.join('\n')
     }
 }
@@ -306,8 +318,8 @@ class RenameTable extends MigrationAction {
         return [
             `  migrations.${actionName}({`,
             `    modelName: "${this.modelName}",`,
-            `    tableName: "${this.tableName}"`,
-            `    oldName: "${this.oldName}"`,
+            `    tableName: "${this.tableName}",`,
+            `    oldName: "${this.oldName}",`,
             '  })'
         ].join('\n')
     }
