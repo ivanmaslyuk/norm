@@ -23,23 +23,6 @@ for (const action in migrationActions) {
     }
 }
 
-// exports.run = function () {
-//     // find models
-//     // check migrations
-
-//     /*
-//     один из вариантов как сделать комманду для миграций: просить пользователя создать файл migrate.js, где будет запускаться эта функция
-//     другой: просить пользователя написать эту функцию в главном файле (плюсы: можно будет на старте проверить, есть ли непрогнанные миграции)
-//     еще один: просто просить прописать комманду в package.json, которая ведет к этому node-пакету
-//     */
-//     if (process.argv[2] === 'migrate') {
-//         let rootPath = process.argv[1]
-//         const rootParts = rootPath.split('/')
-//         rootPath = rootPath.replace(rootParts[rootParts.length - 1], '')
-//         utils.migrate(rootPath)
-//     }
-// }
-
 function sync(func, ...args) {
     const deasync = require('deasync')
     function wrapper(cb) {

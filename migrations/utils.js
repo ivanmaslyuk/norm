@@ -23,8 +23,7 @@ function walk(dir, filter = [], recursive = true) {
 }
 
 function getMigrationsDir(basePath) {
-    // return basePath + '/migrations' TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    return basePath + '/test_migrations'
+    return basePath + '/migrations'
 }
 
 function arraysEqual(left, right) {
