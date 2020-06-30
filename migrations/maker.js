@@ -40,7 +40,7 @@ function getMigrationStates(migrations) {
 }
 
 function getMigrationContent(actions) {
-    let content = 'const { migrations, fields } = require(\'../main\')\n\n' // TODO: change require
+    let content = 'const { migrations, fields } = require(\'norm\')\n\n'
     content += 'module.exports.actions = [\n'
     for (action of actions) {
         content += action.js() + ',\n'

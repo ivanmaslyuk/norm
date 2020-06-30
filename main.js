@@ -1,26 +1,13 @@
 const modelUtils = require('./models/utils')
 
-module.exports.makeModels = function (models) {
-    for (const name in models) {
-        models[name] = modelUtils.makeModel(name, models[name])
+function classesToFunctions(classes) {
+    const functions = {}
+    for (const className in classes) {
+        functions[className] = function (...args) {
+            return new classes[className](...args)
+        }
     }
-    return models
-}
-
-const fields = require('./models/fields')
-exports.fields = {}
-for (const field in fields) {
-    module.exports.fields[field] = function (options) {
-        return new fields[field](options)
-    }
-}
-
-const migrationActions = require('./migrations/actions')
-exports.migrations = {}
-for (const action in migrationActions) {
-    module.exports.migrations[action] = function (info) {
-        return new migrationActions[action](info)
-    }
+    return functions
 }
 
 function sync(func, ...args) {
@@ -34,18 +21,29 @@ function sync(func, ...args) {
     return deasync(wrapper)()
 }
 
-exports.run = function () {
-    let basePath = require.main.filename.split('\\')
-    basePath.pop()
-    basePath = basePath.join('/')
-    if (process.argv[2] === 'migrate') {
-        const { migrate } = require('./migrations/runner')
-        sync(migrate, basePath)
-        process.exit()
-    }
-    if (process.argv[2] === 'makemigrations') {
-        const { makeMigrations } = require('./migrations/maker')
-        sync(makeMigrations, basePath)
-        process.exit()
-    }
+module.exports = {
+    makeModels(models) {
+        for (const name in models) {
+            models[name] = modelUtils.makeModel(name, models[name])
+        }
+        return models
+    },
+    run() {
+        let basePath = require.main.filename.split('\\')
+        basePath.pop()
+        basePath = basePath.join('/')
+        if (process.argv[2] === 'migrate') {
+            const { migrate } = require('./migrations/runner')
+            sync(migrate, basePath)
+            process.exit()
+        }
+        if (process.argv[2] === 'makemigrations') {
+            const { makeMigrations } = require('./migrations/maker')
+            sync(makeMigrations, basePath)
+            process.exit()
+        }
+    },
+
+    fields: classesToFunctions(require('./models/fields')),
+    migrations: classesToFunctions(require('./migrations/actions'))
 }

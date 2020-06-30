@@ -90,9 +90,9 @@ module.exports.Backend = class Backend extends BaseBackend {
                 }
 
                 if (operator === 'equals' && value === 'NULL') {
-                    where.push(`"${key}" IS NULL`)
+                    where.push(`"${field.column}" IS NULL`)
                 } else {
-                    where.push(formatOperator(operator, `"${key}"`, value))
+                    where.push(formatOperator(operator, `"${field.column}"`, value))
                 }
             }
         }
